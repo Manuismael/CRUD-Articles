@@ -15,25 +15,25 @@ const db = firebase.firestore();
 document.addEventListener("DOMContentLoaded", ()=>{
     loadData();
 })
-function showCards() {
-    $("#cards-view").show();
-    $("#table-view").hide();
-}
 
+function showCards() {
+    document.getElementById('cards-view').style.display = 'block';
+    document.getElementById('table-view').style.display = 'none';
+}
 
 function showTable() {
-    $("#cards-view").hide();
-    $("#table-view").show();
+    document.getElementById('cards-view').style.display = 'none';
+    document.getElementById('table-view').style.display = 'block';
 }
-
 function showLoader() {
-    $("#cards-view").hide();
-    $("#table-view").show();
-    $("#loader").show();
+    document.getElementById('loader').style.display='block';
+    document.getElementById('table-view').style.display = 'none';
+    document.getElementById('cards-view').style.display = 'none';
 }
 function hideLoader(){
-    $("#table-view").show();
-    $("#loader").hide();
+    document.getElementById('loader').style.display='none';
+    document.getElementById('table-view').style.display = 'block';
+    
 }
 function addItem() {
     Swal.fire({
@@ -50,44 +50,34 @@ function addItem() {
                 Swal.showValidationMessage(`Veuillez entrer le nom et la description`);
             }
             return { title: title, description: description };
-            
         }
     }).then((result) => {
         if (result.isConfirmed) {
             const { title, description } = result.value;
-            checkArticle(title, description);
+            saveToFirestore(title, description)
         }
     });
 }
 
-function checkArticle(title, description){
-    db.collection("articles").where("title", "==", title).get().then((querySnapshot)=>{
-        if(querySnapshot.empty){
-            saveToFirestore(title,description);
-        }else{
-            Swal.fire(
-                'Article existant!',
-                `${title} existe déjà !`,
-                'error'
-            );
-        }
-    })
-}
-
 function addCard(id,title, description, timestamp) {
-    const newCard= `<div class="di col-lg-3 col-md-4 col-sm-6 mb-4" data-id="${id}">
-    <div class="card mx-2">
-        <div class="card-body p-2">
-            <h5 class="card-title">${title}</h5>
-            <p class="card-text">${description}</p>
-            <p class="card-text">Date: ${timestamp}</p>
-            <div class="btn-group" role="group" aria-label="Basic mixed styles example">
-                <button onclick="deleteItem('${id}')" type="button" class="btn btn-danger mx-1">Supprimer</button>
-                <button onclick="editItem('${id}')" type="button" class="btn btn-success mx-1">Modifier</button>
+    const cardContainer = document.getElementById('cards-view');
+    const newCard = document.createElement('div');
+    newCard.className = 'col-sm-6';
+    newCard.dataset.id=id;
+    newCard.innerHTML = `<div class="p-3 ">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">${title}</h5>
+                    <p class="card-text">${description}</p>
+                    <p class="card-text">Date: ${timestamp}</p>
+                    <div class=" " role="group" aria-label="Basic mixed styles example">
+                    <button onclick="deleteItem('${id}')" type="button" class="btn btn-danger">Supprimer</button>
+                    <button onclick="editItem('${id}')" type="button" class="btn btn-success">Modifier</button>
+                </div>
+                </div>
             </div>
-        </div>
-    </div>`;
-    $('#cards-view').append(newCard);
+        </div>`;
+    cardContainer.appendChild(newCard);
 }
 
 function addTable(id, title, description, timestamp) {
@@ -103,7 +93,6 @@ function addTable(id, title, description, timestamp) {
 }
 
 
-
 function saveToFirestore(title, description) {
     db.collection("articles").add({
         title: title,
@@ -112,7 +101,6 @@ function saveToFirestore(title, description) {
     })
     .then ((docRef)=>{
         console.log("Document enregistrer", docRef.id);
-        location.reload();
     })
     .catch((error)=>{
         console.error("Error", error);
@@ -125,11 +113,8 @@ function saveToFirestore(title, description) {
 }
 
 function loadData(){
-    //$('body').hide();
     showLoader();
     db.collection("articles").get().then((querySnapshot) =>{
-        const count= querySnapshot.size;
-        printArticleCount(count);
         querySnapshot.forEach((doc)=>{
             const data = doc.data();
             const id =doc.id
@@ -139,7 +124,6 @@ function loadData(){
             addCard(id, title, description, timestamp);
             addTable(id, title, description, timestamp);
             hideLoader();
-            //$('body').show();
         });
     }).catch((error)=>{
         console.error("Erreur", error);
@@ -195,14 +179,13 @@ function deleteItem(id){
     }).then((result) => {
         if (result.isConfirmed) {
             db.collection("articles").doc(id).delete().then(() => {
-                document.querySelector(`.di[data-id='${id}']`).remove();
+                document.querySelector(`.col[data-id='${id}']`).remove();
                 document.querySelector(`tr[data-id='${id}']`).remove();
                 Swal.fire(
                     'Supprimé!',
                     'L\'article a été supprimé.',
                     'success'
                 );
-                location.reload();
             }).catch((error) => {
                 console.error("Error removing document: ", error);
                 Swal.fire({
@@ -223,11 +206,6 @@ function updateFirestore(id, title, description) {
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
     }).then(() => {
         console.log("Document successfully updated!");
-        Swal.fire(
-            'Modifié!',
-            'L\'article a été modifié.',
-            'success'
-        );
     }).catch((error) => {
         console.error("Error updating document: ", error);
         Swal.fire({
@@ -236,9 +214,4 @@ function updateFirestore(id, title, description) {
             text: `Erreur lors de la mise à jour de l'article : ${error.message}`
         });
     });
-}
-
-function printArticleCount(count){
-    const number=`Total : ${count}`;
-    $('#article-count').append(number);
 }
