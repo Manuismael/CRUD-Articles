@@ -1,11 +1,5 @@
 const firebaseConfig = {
-    apiKey: "AIzaSyC_yUZI5AMc2GlT4ZMJKjf3M1AwEr21-po",
-    authDomain: "gestion-104a9.firebaseapp.com",
-    projectId: "gestion-104a9",
-    storageBucket: "gestion-104a9.appspot.com",
-    messagingSenderId: "333021748821",
-    appId: "1:333021748821:web:0769cc4d3a8c9933557edc",
-    measurementId: "G-YLJ0WLZ4K1"
+   
 };
 
 firebase.initializeApp(firebaseConfig)
