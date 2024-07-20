@@ -1,0 +1,23 @@
+{
+  "name": "crud-articles",
+  "version": "1.0.0",
+  "description": "CRUD Articles",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Manuismael/CRUD-Articles.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Manuismael/CRUD-Articles/issues"
+  },
+  "homepage": "https://github.com/Manuismael/CRUD-Articles#readme",
+  "dependencies": {
+    "express": "^4.19.2",
+    "jquery": "^3.7.1"
+  }
+}
