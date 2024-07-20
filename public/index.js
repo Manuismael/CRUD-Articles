@@ -259,6 +259,9 @@ function editItem(id){
             if (!newTitle || !newDescription) {
                 Swal.showValidationMessage(`Veuillez entrer le titre et la description`);
             }
+            if(title == newTitle){
+                Swal.showValidationMessage(`Veuillez entrer un nom différent`);
+            }
             return { newTitle: newTitle, newDescription: newDescription };
         }
     }).then((result) => {
