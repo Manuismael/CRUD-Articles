@@ -41,6 +41,8 @@ function hideLoader(){
     $("#table-view").show();
     $("#loader").hide();
 }
+
+
 function addItem() {
     Swal.fire({
         title: 'Ajouter un Article',
@@ -112,6 +114,8 @@ function searchArticles(query) {
             // Supprimer les doublons
             const uniqueArticles = [...new Map(articles.map(item => [item.id, item])).values()];
             const numberOfArticles = uniqueArticles.length;
+            $('#article-count').html('');
+            printArticleCount(numberOfArticles);
             //resultsDiv.html(`Nombre d'articles trouvés : ${numberOfArticles}<br><br>`);
 
             uniqueArticles.forEach((article) => {
@@ -256,36 +260,24 @@ function editItem(id){
         preConfirm: () => {
             const newTitle = Swal.getPopup().querySelector('#item-title').value;
             const newDescription = Swal.getPopup().querySelector('#item-description').value;
+            
             if (!newTitle || !newDescription) {
                 Swal.showValidationMessage(`Veuillez entrer le titre et la description`);
-            }
-            if(title == newTitle){
-                Swal.showValidationMessage(`Veuillez entrer un nom différent`);
             }
             return { newTitle: newTitle, newDescription: newDescription };
         }
     }).then((result) => {
         if (result.isConfirmed) {
             const { newTitle, newDescription } = result.value;
-
-            db.collection("articles").where("title", "==", title).get().then((querySnapshot)=>{
-                if(querySnapshot.empty){
-                    updateFirestore(id, newTitle, newDescription);
-                    card.querySelector('h5').innerText = newTitle;
-                    card.querySelector('p').innerText = newDescription;
-                    row.children[1].innerText = newTitle;
-                    row.children[2].innerText = newDescription;
-                }else{
-                    Swal.fire(
-                        'Article existant!',
-                        `${title} existe déjà !`,
-                        'error'
-                    );
-                }
-            });
+            checkAndUpdate(id, newTitle, title, newDescription);
+            card.querySelector('h3').innerText = newTitle;
+            card.querySelector('p').innerText = newDescription;
+            row.children[0].innerText = newTitle;
+            row.children[1].innerText = newDescription;
         }
     });
 }
+
 
 function deleteItem(id){
     Swal.fire({
@@ -320,28 +312,50 @@ function deleteItem(id){
 }
 
 
-function updateFirestore(id, title, description) {
-    db.collection("articles").doc(id).update({
-        title: title,
-        description: description,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(() => {
-        console.log("Document successfully updated!");
-        Swal.fire(
-            'Modifié!',
-            'L\'article a été modifié.',
-            'success'
-        );
-        location.reload();
-    }).catch((error) => {
-        console.error("Error updating document: ", error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Erreur',
-            text: `Erreur lors de la mise à jour de l'article : ${error.message}`
+function checkAndUpdate(articleId, title, newTitle, newDescription) {
+    if(title !== newTitle){
+        db.collection("articles").where("title", "==", newTitle).get()
+        .then((querySnapshot) => {
+            if (querySnapshot.size > 0) {
+                // Si un article avec ce titre existe déjà, afficher une alerte
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: 'Un article avec ce nom existe déjà. Veuillez choisir un nom différent.'
+                });
+            } else {
+                // Si le titre est unique, mettre à jour l'article
+                db.collection("articles").doc(articleId).update({
+                    title: newTitle,
+                    description: newDescription
+                }).then(() => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Succès',
+                        text: 'L\'article a été mis à jour avec succès.'
+                    });
+                    location.reload(); // Actualiser la page après la mise à jour
+                }).catch((error) => {
+                    console.error("Erreur lors de la mise à jour de l'article :", error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: `Erreur lors de la mise à jour de l'article`
+                    });
+                });
+            }
+        }).catch((error) => {
+            console.error("Erreur lors de la vérification de l'unicité du titre :", error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: `Erreur lors de la vérification`
+            });
         });
-    });
-}
+    }
+
+    }
+
 
 function printArticleCount(count){
     const number=`Total : ${count}`;
